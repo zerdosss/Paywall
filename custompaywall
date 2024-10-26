@@ -1,0 +1,263 @@
+import SwiftUI
+
+struct PaywallView: View {
+    @State private var selectedPlan: String? = nil
+    @State private var scrollPosition: CGFloat = 0
+    @State private var isScrollingForward = true
+    private let timerInterval = 0.03
+    private let scrollSpeed: CGFloat = 2.0
+    
+    // Sample Reviews Data
+    let sampleReviews = [
+        (title: "Love the Custom Flashcards!", content: "The app allows me to create flashcards tailored to my needs, making vocabulary learning much more personal and effective."),
+        (title: "Amazing Progress Tracking", content: "I’m impressed by the detailed stats! I can see my daily performance and which words I struggle with."),
+        (title: "Great for Quick Review", content: "The pre-made decks save me a lot of time when I just want to get in a quick practice session."),
+        (title: "Fun Swiping Feature", content: "The swipe feature makes reviewing words feel like a game. I keep wanting to swipe through more cards!"),
+        (title: "Highly Recommend for Beginners", content: "This app is perfect for beginners. The ready-made decks and custom flashcard options cater to different learning styles."),
+        (title: "Intuitive and Efficient", content: "The interface is simple and easy to use. Creating and editing flashcards is straightforward, and I love the tracking system."),
+        (title: "Kelime Kartları Çok Etkili", content: "Kendi flashcard’larımı oluşturabilmek harika! Ayrıca hazır kartlar öğrenmeme büyük katkı sağlıyor."),
+        (title: "Pratique et Efficace", content: "J'apprécie la possibilité de suivre mes statistiques, c'est motivant de voir mes progrès quotidiens."),
+        (title: "Amélioration Constante", content: "J'adore pouvoir créer des cartes personnalisées. L'application me permet de me concentrer sur mes propres besoins d'apprentissage."),
+        (title: "Ideal para Aprender", content: "Puedo agregar tarjetas que se ajustan a mi vocabulario. La función de estadísticas también me motiva a seguir adelante.")
+    ]
+    
+    var body: some View {
+        ZStack {
+            LinearGradient(colors: [Color.orange.opacity(0.2), Color.pink.opacity(0.3)], startPoint: .top, endPoint: .bottom)
+                .edgesIgnoringSafeArea(.all)
+            VStack(spacing: -10) {
+                
+                VStack(spacing: -2) {
+                    /*
+                     Button(action: {
+                     
+                     }) {
+                     HStack {
+                     Text("Later")
+                     
+                     Image(systemName: "chevron.right")
+                     }
+                     
+                     }
+                     */
+                    // Title and Subtitle
+                    Text("Would you like to join")
+                        .font(.system(size: 28))
+                        .fontWeight(.bold)
+                        .multilineTextAlignment(.center)
+                    
+                    
+                    HStack {
+                        Text("FlashDecks+ ")
+                            .font(.system(size: 23))
+                            .fontWeight(.bold)
+                        
+                        Text("Premium")
+                            .font(.system(size: 23))
+                            .fontWeight(.bold)
+                            .foregroundColor(Color(red: 0.5, green: 0.0, blue: 0.5)) // Gold color
+                    }
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal)
+                }
+                .padding(.top, 20)
+                
+                
+                // Subscription Options
+                HStack(spacing: 20) {
+                    
+                    SubscriptionOptionView(title: "Premium Club", price: "$9.99/yr", originalPrice: "$15.99/yr", discount: "20% OFF", isSelected: selectedPlan == "Annual")
+                        .onTapGesture {
+                            selectedPlan = "Annual"
+                        }
+                    
+                }
+                .padding(.horizontal)
+                
+                // Features Section
+                ZStack {
+                    LinearGradient(colors: [Color.pink.opacity(0.2), Color.pink.opacity(0.5)], startPoint: .top, endPoint: .bottom)
+                    VStack(alignment: .leading, spacing: 10) {
+                        Text("10+ Pro Features Included")
+                            .font(.headline)
+                            .padding(.top, 10)
+                        
+                        FeatureItemView(icon: "lock.open", text: "Add unlimited cards")
+                        FeatureItemView(icon: "lock.open", text: "Track your statistics")
+                        FeatureItemView(icon: "lock.open", text: "Family sharing support")
+                    }
+                    .padding()
+                    .frame(width: 250,height: 140)
+                }
+                .background()
+                .cornerRadius(20)
+
+                // Auto-Scrolling Reviews Section
+                ScrollViewReader { scrollViewProxy in
+                    ScrollView(.horizontal, showsIndicators: false) {
+                        HStack {
+                            
+                            // User Reviews
+                            ForEach(0..<10, id: \.self) { index in
+                                UserReviews(
+                                    reviewTitle: sampleReviews[index % sampleReviews.count].title,
+                                    review: sampleReviews[index % sampleReviews.count].content
+                                )
+                                .id(index + 1) // Added ID for each user review
+                            }
+                            
+                        }
+                        .padding()
+                        .onAppear {
+                            startAutoScroll(with: scrollViewProxy)
+                        }
+                    }
+                    .frame(height: 230)
+                }  
+                
+                // Restore Purchases
+                Button(action: {
+                    // Handle restore purchases action
+                }) {
+                    Text("I have a promo code!")
+                        .foregroundColor(.gray)
+                        .font(.footnote)
+                }
+                .padding(.bottom)
+                
+                // Continue Button
+                Button(action: {
+                    // Handle subscription action
+                }) {
+                    Text("Continue")
+                        .font(.headline)
+                        .foregroundColor(.black)
+                        .frame(maxWidth: .infinity, maxHeight: 50)
+                        .padding(2)
+                        .background(Color(red: 2.5, green: 1.84, blue: 0.2))
+                        .cornerRadius(12)
+                        .padding(.horizontal)
+                }
+                
+                Spacer()
+                
+                
+            }
+            .padding()
+        }
+        
+    }
+    // Function to start the auto-scrolling animation
+    private func startAutoScroll(with scrollViewProxy: ScrollViewProxy) {
+        Timer.scheduledTimer(withTimeInterval: timerInterval, repeats: true) { _ in
+            // Update scrolling position
+            scrollPosition += isScrollingForward ? scrollSpeed : -scrollSpeed
+            
+            // Scroll to the updated position
+            withAnimation(.linear(duration: timerInterval)) {
+                scrollViewProxy.scrollTo(Int(scrollPosition / 250), anchor: .leading)
+            }
+            
+            // Adjust the scrolling direction when reaching the bounds
+            if scrollPosition >= 1250 { // Right bound
+                isScrollingForward = false
+            } else if scrollPosition <= 0 { // Left bound
+                isScrollingForward = true
+            }
+        }
+    }}
+
+struct SubscriptionOptionView: View {
+    let title: String
+    let price: String
+    let originalPrice: String?
+    let discount: String?
+    
+    var isSelected: Bool
+    
+    var body: some View {
+        
+        VStack {
+            ZStack {
+                Image("laurel.wrealth")
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 260,height: 240)
+                VStack {
+                    Image(systemName: "crown")
+                    if let discount = discount {
+                        Text(discount)
+                            .font(.caption)
+                            .fontWeight(.bold)
+                            .foregroundColor(.green)
+                    }
+                    
+                    Text(title)
+                        .font(.headline)
+                    
+                    Text(price)
+                        .font(.title2)
+                        .fontWeight(.bold)
+                    
+                    if let originalPrice = originalPrice {
+                        Text(originalPrice)
+                            .font(.footnote)
+                            .strikethrough()
+                            .foregroundColor(.gray)
+                    }
+                }
+            }
+        }
+        .frame(maxWidth: .infinity)
+        .cornerRadius(12)
+        .padding(.horizontal)
+        .scaleEffect(isSelected ? 1.2 : 1.0) // Permanently scales when selected
+    }
+}
+struct UserReviews: View {
+    let reviewTitle: String
+    let review: String
+    
+    var body: some View {
+        VStack(alignment: .leading) {
+            Text(reviewTitle)
+                .fontWeight(.bold)
+                .font(.system(size: 20))
+            
+            HStack(spacing: 5) {
+                ForEach(0..<5) { _ in
+                    Image(systemName: "star.fill")
+                        .resizable()
+                        .scaledToFit()
+                        .foregroundColor(.yellow)
+                        .frame(width: 15, height: 15) // Adjust size as needed
+                }
+            }
+            
+            Text(review)
+        }
+        .padding()
+        .frame(width: 350,height: 160)
+        .background(Color(UIColor.systemGray6))
+        .cornerRadius(20)
+    }
+}
+struct FeatureItemView: View {
+    let icon: String
+    let text: String
+    
+    var body: some View {
+        HStack {
+            Image(systemName: icon)
+                .foregroundColor(.blue)
+            Text(text)
+                .font(.subheadline)
+        }
+    }
+}
+
+struct PaywallView_Previews: PreviewProvider {
+    static var previews: some View {
+        PaywallView()
+    }
+}
